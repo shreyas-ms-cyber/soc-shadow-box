@@ -1,10 +1,14 @@
-# 🛡️ Autonomous SOC Shadow-Box
 
-## AI-Powered Cyber Attack Simulation & Defense System
+## 🛡️ Features
+- Attack Simulation (Brute Force, File Activity, DDoS)
+- AI Anomaly Detection
+- Real-time Dashboard
+- Attack Replay System
+- CSV Export
 
-### Phase 1: Database & Basic Structure ✅
-
-This is the foundational setup for the SOC Shadow Box project.
+## 📄 License
+MIT
+EOF
 
 ## 🚀 Quick Start
 
