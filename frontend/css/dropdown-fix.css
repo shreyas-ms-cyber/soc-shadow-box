@@ -1,0 +1,42 @@
+/* Fix dropdown visibility - Clear text */
+.log-filters select {
+    background: #0a0e27 !important;
+    color: #e0e0e0 !important;
+    border: 1px solid #00ff9d !important;
+    padding: 10px 15px !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+}
+
+.log-filters select option {
+    background: #0a0e27 !important;
+    color: #e0e0e0 !important;
+    padding: 10px !important;
+    font-size: 13px !important;
+}
+
+.log-filters select option:hover {
+    background: #00ff9d !important;
+    color: #0a0e27 !important;
+}
+
+.log-filters select option:checked {
+    background: #00ff9d !important;
+    color: #0a0e27 !important;
+}
+
+/* Fix for severity filter specific */
+#severityFilter {
+    background: #0a0e27 !important;
+    color: #e0e0e0 !important;
+}
+
+#severityFilter option {
+    background: #0a0e27 !important;
+    color: #e0e0e0 !important;
+}
+
+#severityFilter option[value="info"] { color: #00ff9d !important; }
+#severityFilter option[value="warning"] { color: #ffaa44 !important; }
+#severityFilter option[value="error"] { color: #ff8844 !important; }
+#severityFilter option[value="critical"] { color: #ff4444 !important; }

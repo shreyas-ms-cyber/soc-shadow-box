@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>SOC Shadow Box | AI Cyber Defense Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%230a0e27' stroke='%2300ff9d' stroke-width='3'/%3E%3Cpath d='M35 35 L65 35 L65 65 L35 65 Z' fill='none' stroke='%2300ff9d' stroke-width='3'/%3E%3Cpath d='M50 35 L50 65' stroke='%2300ff9d' stroke-width='3'/%3E%3Cpath d='M35 50 L65 50' stroke='%2300ff9d' stroke-width='3'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/sidebar-fix.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="css/header-fix.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/ultimate-meter.css">
+<link rel="stylesheet" href="css/sidebar-fix.css">
+<link rel="stylesheet" href="css/header-fix.css">
+<link rel="stylesheet" href="css/speed-fix.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="logo">
+                <div class="logo-icon">🛡️</div>
+                <div class="logo-text">
+                    <span class="logo-title">SHADOW-BOX</span>
+                    <span class="logo-subtitle">SOC v1.0</span>
+                </div>
+            </div>
+            <nav class="nav-menu">
+                <a href="index.html" class="nav-item active">
+                    <span class="nav-icon">📊</span>
+                    <span>Dashboard</span>
+                </a>
+                <a href="logs.html" class="nav-item">
+                    <span class="nav-icon">📜</span>
+                    <span>Logs Viewer</span>
+                </a>
+                <a href="alerts.html" class="nav-item">
+                    <span class="nav-icon">🚨</span>
+                    <span>Alerts Panel</span>
+                </a>
+                <a href="replay.html" class="nav-item">
+                    <span class="nav-icon">▶️</span>
+                    <span>Attack Replay</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="status-indicator">
+                    <div class="status-dot online" id="statusDot"></div>
+                    <span id="systemStatus">System Online</span>
+                </div>
+                <div class="api-status connected" id="apiStatus">API: Connected</div>
+            </div>
+        </aside>
+        
+        <main class="main-content">
+            <header class="main-header">
+                <div class="header-left">
+                    <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
+                    <h1>Security Dashboard</h1>
+                </div>
+                <div class="header-right">
+                    <div class="datetime" id="datetime"></div>
+                    <div class="mode-toggle">
+                        <span class="mode-label">Auto Response</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="autoResponseToggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </header>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="totalAttacks">0</span>
+                        <span class="stat-label">Total Attacks</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🚨</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="activeAlerts">0</span>
+                        <span class="stat-label">Active Alerts</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🔒</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="blockedIPs">0</span>
+                        <span class="stat-label">Blocked IPs</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🤖</div>
+                    <div class="stat-info">
+                        <span class="stat-value" id="aiDetections">0</span>
+                        <span class="stat-label">AI Detections</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="dashboard-row">
+                <div class="risk-meter-card">
+                    <h3>⚡ THREAT RISK METER</h3>
+                    <div class="premium-gauge">
+                        <div class="gauge-outer-ring"></div>
+                        <div class="gauge-ring-bg"></div>
+                        <canvas id="riskGauge" width="260" height="260"></canvas>
+                        <div class="gauge-center">
+                            <span class="risk-score" id="riskScore">0</span>
+                            <span class="risk-score-label">THREAT SCORE</span>
+                        </div>
+                    </div>
+                    <div class="risk-level-container">
+                        <div class="risk-level low" id="riskLevel">INITIALIZING</div>
+                    </div>
+                </div>
+                
+                <div class="quick-actions-card">
+                    <h3>🎯 ATTACK SIMULATION</h3>
+                    <div class="attack-buttons">
+                        <button class="attack-btn brute-force" data-attack="brute_force">🔐 Brute Force</button>
+                        <button class="attack-btn file-activity" data-attack="file_activity">📁 File Activity</button>
+                        <button class="attack-btn ddos" data-attack="ddos">🌊 DDoS Attack</button>
+                        <button class="attack-btn random" data-attack="random">🎲 Random Attack</button>
+                        <button class="attack-btn campaign" data-attack="campaign">⚔️ Attack Campaign</button>
+                    </div>
+                    <div class="attack-feedback" id="attackFeedback"></div>
+                </div>
+            </div>
+            
+            <div class="alerts-section">
+                <div class="section-header">
+                    <h3>🚨 RECENT ALERTS</h3>
+                    <button class="refresh-btn" id="refreshAlerts">🔄 Refresh</button>
+                </div>
+                <div class="alerts-table-container">
+                    <table class="alerts-table">
+                        <thead>
+                            <tr><th>Time</th><th>Source IP</th><th>Category</th><th>Score</th><th>Status</th><th>Action</th></tr>
+                        </thead>
+                        <tbody id="alertsTableBody"><tr><td colspan="6" class="loading">Loading alerts...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="logs-section">
+                <div class="section-header">
+                    <h3>📋 LIVE LOG FEED</h3>
+                    <button class="clear-logs-btn" id="clearLogs">Clear</button>
+                </div>
+                <div class="log-feed" id="logFeed">
+                    <div class="log-entry system">Waiting for logs...</div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>

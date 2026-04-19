@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOC Shadow Box - Attack Replay</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%230a0e27' stroke='%2300ff9d' stroke-width='3'/%3E%3Cpath d='M35 35 L65 35 L65 65 L35 65 Z' fill='none' stroke='%2300ff9d' stroke-width='3'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/sidebar-fix.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <style>
+        .replay-container {
+            background: rgba(18, 22, 59, 0.8);
+            border-radius: 16px;
+            padding: 20px;
+        }
+        .scenario-selector {
+            margin-bottom: 20px;
+        }
+        .scenario-selector label {
+            display: block;
+            margin-bottom: 8px;
+            color: #00ff9d;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 1px;
+        }
+        .scenario-selector select {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 255, 157, 0.3);
+            border-radius: 10px;
+            color: #e0e0e0;
+            font-family: 'Inter', monospace;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .scenario-selector select:hover {
+            border-color: #00ff9d;
+            background: rgba(0, 255, 157, 0.05);
+        }
+        .scenario-selector select option {
+            background: #0a0e27;
+            color: #e0e0e0;
+            padding: 10px;
+        }
+        .replay-controls {
+            display: flex;
+            gap: 12px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .replay-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #00ff9d, #00b8ff);
+            border: none;
+            border-radius: 8px;
+            color: #0a0e27;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .replay-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 255, 157, 0.3);
+        }
+        .replay-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 5px 15px;
+            border-radius: 8px;
+        }
+        .speed-control label {
+            color: #8a9bb5;
+            font-size: 13px;
+        }
+        .speed-control select {
+            padding: 6px 10px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(0, 255, 157, 0.3);
+            border-radius: 6px;
+            color: #00ff9d;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .timeline-view {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .timeline-view h3 {
+            color: #00ff9d;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        .timeline-view .scenario-info {
+            color: #8a9bb5;
+            font-size: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 255, 157, 0.1);
+        }
+        .timeline-step {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 12px;
+            margin: 8px 0;
+            background: rgba(0, 255, 157, 0.05);
+            border-left: 3px solid #00ff9d;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .timeline-step:hover {
+            background: rgba(0, 255, 157, 0.1);
+            transform: translateX(5px);
+        }
+        .timeline-step.active {
+            background: rgba(0, 255, 157, 0.15);
+            border-left-color: #ffaa44;
+            box-shadow: 0 0 10px rgba(0, 255, 157, 0.3);
+        }
+        .step-number {
+            font-weight: bold;
+            color: #00ff9d;
+            min-width: 60px;
+            font-size: 14px;
+        }
+        .step-action {
+            flex: 1;
+            font-size: 13px;
+        }
+        .step-result {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .result-success { background: rgba(0, 255, 157, 0.2); color: #00ff9d; }
+        .result-warning { background: rgba(255, 170, 68, 0.2); color: #ffaa44; }
+        .result-critical { background: rgba(255, 68, 68, 0.2); color: #ff4444; }
+        .replay-status {
+            margin-top: 20px;
+            padding: 12px 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            border-left: 3px solid #00ff9d;
+        }
+        .create-demo-btn {
+            background: linear-gradient(135deg, #aa44ff, #ff44aa);
+        }
+        .no-scenario {
+            text-align: center;
+            padding: 40px;
+            color: #5a6e8a;
+        }
+        .scenario-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .badge-brute { background: #ff4444; color: white; }
+        .badge-file { background: #ffaa44; color: #0a0e27; }
+        .badge-ddos { background: #ff44aa; color: white; }
+    </style>
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/ultimate-meter.css">
+<link rel="stylesheet" href="css/sidebar-fix.css">
+<link rel="stylesheet" href="css/header-fix.css">
+<link rel="stylesheet" href="css/speed-fix.css">
+<link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="logo">
+                <div class="logo-icon">🛡️</div>
+                <div class="logo-text">
+                    <span class="logo-title">SHADOW-BOX</span>
+                    <span class="logo-subtitle">SOC v1.0</span>
+                </div>
+            </div>
+            <nav class="nav-menu">
+                <a href="index.html" class="nav-item"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+                <a href="logs.html" class="nav-item"><span class="nav-icon">📜</span><span>Logs Viewer</span></a>
+                <a href="alerts.html" class="nav-item"><span class="nav-icon">🚨</span><span>Alerts Panel</span></a>
+                <a href="replay.html" class="nav-item active"><span class="nav-icon">▶️</span><span>Attack Replay</span></a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="status-indicator">
+                    <div class="status-dot online" id="statusDot"></div>
+                    <span id="systemStatus">System Online</span>
+                </div>
+                <div class="api-status connected" id="apiStatus">API: Connected</div>
+            </div>
+        </aside>
+        <main class="main-content">
+            <header class="main-header">
+                <div class="header-left">
+                    <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
+                    <h1>Attack Replay Studio</h1>
+                </div>
+            </header>
+            
+            <div class="replay-container">
+                <div class="scenario-selector">
+                    <label>🎯 SELECT ATTACK SCENARIO</label>
+                    <select id="scenarioSelect">
+                        <option value="">-- Load scenarios --</option>
+                    </select>
+                </div>
+                
+                <div class="replay-controls">
+                    <button class="replay-btn" id="loadScenarioBtn">📋 Load Scenario</button>
+                    <button class="replay-btn" id="replayBtn" disabled>▶️ Start Replay</button>
+                    <div class="speed-control">
+                        <label>⚡ Speed:</label>
+                        <select id="speedSelect">
+                            <option value="0.5">🐢 0.5x - Slow</option>
+                            <option value="1.0" selected>▶️ 1x - Normal</option>
+                            <option value="2.0">⚡ 2x - Fast</option>
+                            <option value="5.0">🚀 5x - Very Fast</option>
+                        </select>
+                    </div>
+                    <button class="replay-btn create-demo-btn" id="createDemoBtn">🎮 Create Demo Scenarios</button>
+                </div>
+                
+                <div id="timelineView" class="timeline-view">
+                    <div class="no-scenario">📋 Select a scenario from the dropdown above and click "Load Scenario"</div>
+                </div>
+                
+                <div id="replayStatus" class="replay-status" style="display: none;"></div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="js/api.js"></script>
+    <script>
+        let currentScenario = null;
+        let isReplaying = false;
+        
+        function getAttackBadge(attackType) {
+            const type = (attackType || '').toLowerCase();
+            if (type.includes('brute')) return '<span class="scenario-badge badge-brute">🔐 BRUTE</span>';
+            if (type.includes('file')) return '<span class="scenario-badge badge-file">📁 FILE</span>';
+            if (type.includes('ddos')) return '<span class="scenario-badge badge-ddos">🌊 DDOS</span>';
+            return '';
+        }
+        
+        async function loadScenarios() {
+            try {
+                const response = await fetch(`${API_BASE}/api/replay/scenarios`);
+                const data = await response.json();
+                
+                if (data.success && data.scenarios && data.scenarios.length > 0) {
+                    const select = document.getElementById('scenarioSelect');
+                    let options = '<option value="">-- Select a scenario --</option>';
+                    
+                    for (const s of data.scenarios) {
+                        const badge = getAttackBadge(s.attack_type);
+                        options += `<option value="${s.scenario_id}">${badge} ${s.name} (${s.total_steps} steps, ${s.duration_seconds}s)</option>`;
+                    }
+                    select.innerHTML = options;
+                } else {
+                    document.getElementById('scenarioSelect').innerHTML = '<option value="">-- No scenarios found. Click "Create Demo Scenarios" --</option>';
+                }
+            } catch (error) {
+                console.error('Failed to load scenarios:', error);
+                document.getElementById('scenarioSelect').innerHTML = '<option value="">-- Error loading scenarios --</option>';
+            }
+        }
+        
+        async function loadScenarioDetails(scenarioId) {
+            try {
+                const response = await fetch(`${API_BASE}/api/replay/scenario/${scenarioId}`);
+                const data = await response.json();
+                
+                if (data.success && data.scenario) {
+                    currentScenario = data.scenario;
+                    displayTimeline(currentScenario);
+                    document.getElementById('replayBtn').disabled = false;
+                    document.getElementById('replayStatus').style.display = 'none';
+                } else {
+                    document.getElementById('timelineView').innerHTML = '<div class="no-scenario">❌ Failed to load scenario details</div>';
+                    document.getElementById('replayBtn').disabled = true;
+                }
+            } catch (error) {
+                console.error('Failed to load scenario details:', error);
+                document.getElementById('timelineView').innerHTML = '<div class="no-scenario">❌ Error loading scenario</div>';
+                document.getElementById('replayBtn').disabled = true;
+            }
+        }
+        
+        function displayTimeline(scenario) {
+            const badge = getAttackBadge(scenario.attack_type);
+            const container = document.getElementById('timelineView');
+            container.innerHTML = `
+                <h3>📜 ${scenario.name} ${badge}</h3>
+                <div class="scenario-info">
+                    🔍 Type: ${scenario.attack_type.toUpperCase()} | 📊 Steps: ${scenario.total_steps} | ⏱️ Duration: ${scenario.duration_seconds}s | 🏷️ Tags: ${scenario.tags.join(', ')}
+                </div>
+                <div class="timeline-steps">
+                    ${scenario.timeline.map(step => `
+                        <div class="timeline-step" data-step="${step.step}">
+                            <div class="step-number">Step ${step.step}</div>
+                            <div class="step-action">${step.action}</div>
+                            <div class="step-result result-${step.result === 'failed' ? 'critical' : step.result === 'warning' ? 'warning' : 'success'}">${step.result}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+        
+        async function startReplay() {
+            if (!currentScenario || isReplaying) return;
+            
+            isReplaying = true;
+            const speed = parseFloat(document.getElementById('speedSelect').value);
+            const statusDiv = document.getElementById('replayStatus');
+            const replayBtn = document.getElementById('replayBtn');
+            
+            statusDiv.style.display = 'block';
+            statusDiv.innerHTML = '▶️ Starting replay at ' + speed + 'x speed...';
+            statusDiv.style.borderLeftColor = '#ffaa44';
+            replayBtn.disabled = true;
+            
+            const steps = document.querySelectorAll('.timeline-step');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/replay/replay/${currentScenario.scenario_id}?speed=${speed}`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                    statusDiv.innerHTML = `✅ Replay completed! Created ${data.data.logs_created} logs in ${data.data.steps_replayed} steps.`;
+                    statusDiv.style.borderLeftColor = '#00ff9d';
+                    
+                    // Highlight all steps
+                    steps.forEach((step, index) => {
+                        setTimeout(() => {
+                            step.classList.add('active');
+                        }, index * 300);
+                    });
+                    
+                    setTimeout(() => {
+                        steps.forEach(step => step.classList.remove('active'));
+                    }, steps.length * 300 + 1000);
+                } else {
+                    statusDiv.innerHTML = `❌ Replay failed: ${data.detail || 'Unknown error'}`;
+                    statusDiv.style.borderLeftColor = '#ff4444';
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `❌ Replay failed: ${error.message}`;
+                statusDiv.style.borderLeftColor = '#ff4444';
+            }
+            
+            isReplaying = false;
+            replayBtn.disabled = false;
+        }
+        
+        async function createDemoScenarios() {
+            const statusDiv = document.getElementById('replayStatus');
+            statusDiv.style.display = 'block';
+            statusDiv.innerHTML = '🎮 Creating demo scenarios...';
+            statusDiv.style.borderLeftColor = '#ffaa44';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/replay/demo/create`, { method: 'POST' });
+                const data = await response.json();
+                
+                if (data.success) {
+                    statusDiv.innerHTML = `✅ Created ${data.scenarios.length} demo scenarios!`;
+                    statusDiv.style.borderLeftColor = '#00ff9d';
+                    await loadScenarios();
+                } else {
+                    statusDiv.innerHTML = `❌ Failed to create scenarios`;
+                    statusDiv.style.borderLeftColor = '#ff4444';
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `❌ Error: ${error.message}`;
+                statusDiv.style.borderLeftColor = '#ff4444';
+            }
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Check API status
+        async function checkAPIStatus() {
+            const apiStatus = document.getElementById('apiStatus');
+            const statusDot = document.getElementById('statusDot');
+            const systemStatus = document.getElementById('systemStatus');
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                if (response.ok) {
+                    apiStatus.textContent = 'API: Connected';
+                    apiStatus.className = 'api-status connected';
+                    statusDot.className = 'status-dot online';
+                    systemStatus.textContent = 'System Online';
+                } else {
+                    apiStatus.textContent = 'API: Disconnected';
+                    apiStatus.className = 'api-status disconnected';
+                    statusDot.className = 'status-dot offline';
+                    systemStatus.textContent = 'System Offline';
+                }
+            } catch {
+                apiStatus.textContent = 'API: Disconnected';
+                apiStatus.className = 'api-status disconnected';
+                statusDot.className = 'status-dot offline';
+                systemStatus.textContent = 'System Offline';
+            }
+        }
+        
+        // Event listeners
+        document.getElementById('loadScenarioBtn').addEventListener('click', () => {
+            const select = document.getElementById('scenarioSelect');
+            const scenarioId = select.value;
+            if (scenarioId) {
+                loadScenarioDetails(scenarioId);
+            } else {
+                document.getElementById('timelineView').innerHTML = '<div class="no-scenario">⚠️ Please select a scenario first</div>';
+            }
+        });
+        
+        document.getElementById('replayBtn').addEventListener('click', startReplay);
+        document.getElementById('createDemoBtn').addEventListener('click', createDemoScenarios);
+        document.getElementById('mobileMenuBtn').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('mobile-open');
+        });
+        
+        // Initialize
+        loadScenarios();
+        checkAPIStatus();
+        setInterval(checkAPIStatus, 5000);
+    </script>
+</body>
+</html>

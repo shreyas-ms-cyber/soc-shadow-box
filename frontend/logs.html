@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOC Shadow Box - Logs Viewer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/sidebar-fix.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <style>
+        .logs-container {
+            background: rgba(18, 22, 59, 0.8);
+            border-radius: 16px;
+            padding: 20px;
+        }
+        .log-filters {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .log-filters input, .log-filters select {
+            padding: 10px 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(0, 255, 157, 0.3);
+            border-radius: 8px;
+            color: #e0e0e0;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .log-filters input { flex: 1; min-width: 200px; }
+        .log-filters select { min-width: 120px; }
+        .log-entry-item {
+            padding: 12px;
+            border-left: 3px solid #00ff9d;
+            margin-bottom: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        .log-entry-item:hover {
+            transform: translateX(5px);
+            background: rgba(0, 255, 157, 0.05);
+        }
+        .log-meta {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 8px;
+            color: #8a9bb5;
+            font-size: 11px;
+            flex-wrap: wrap;
+        }
+        .log-details {
+            color: #e0e0e0;
+            word-break: break-all;
+        }
+        .action-btn {
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #00ff9d, #00b8ff);
+            border: none;
+            border-radius: 8px;
+            color: #0a0e27;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 255, 157, 0.3);
+        }
+        .badge-info { background: #2a2f4f; padding: 2px 8px; border-radius: 12px; }
+        .badge-warning { background: #ffaa44; color: #0a0e27; padding: 2px 8px; border-radius: 12px; }
+        .badge-error { background: #ff4444; padding: 2px 8px; border-radius: 12px; }
+        .badge-critical { background: #ff4444; padding: 2px 8px; border-radius: 12px; animation: pulse 1s infinite; }
+        .loading { text-align: center; padding: 40px; color: #5a6e8a; }
+        .toast-message {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #00ff9d;
+            color: #0a0e27;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.7; } }
+    </style>
+<link rel="stylesheet" href="css/dropdown-fix.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="logo">
+                <div class="logo-icon">🛡️</div>
+                <div class="logo-text">
+                    <span class="logo-title">SHADOW-BOX</span>
+                    <span class="logo-subtitle">SOC v1.0</span>
+                </div>
+            </div>
+            <nav class="nav-menu">
+                <a href="index.html" class="nav-item"><span class="nav-icon">📊</span><span>Dashboard</span></a>
+                <a href="logs.html" class="nav-item active"><span class="nav-icon">📜</span><span>Logs Viewer</span></a>
+                <a href="alerts.html" class="nav-item"><span class="nav-icon">🚨</span><span>Alerts Panel</span></a>
+                <a href="replay.html" class="nav-item"><span class="nav-icon">▶️</span><span>Attack Replay</span></a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="status-indicator">
+                    <div class="status-dot online" id="statusDot"></div>
+                    <span id="systemStatus">System Online</span>
+                </div>
+                <div class="api-status connected" id="apiStatus">API: Connected</div>
+            </div>
+        </aside>
+        <main class="main-content">
+            <header class="main-header">
+                <div class="header-left">
+                    <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
+                    <h1>Logs Viewer</h1>
+                </div>
+            </header>
+            <div class="logs-container">
+                <div class="log-filters">
+                    <input type="text" id="searchLogs" placeholder="🔍 Search logs...">
+                    <select id="severityFilter">
+                        <option value="">All Severities</option>
+                        <option value="info">ℹ️ Info</option>
+                        <option value="warning">⚠️ Warning</option>
+                        <option value="error">❌ Error</option>
+                        <option value="critical">🔥 Critical</option>
+                    </select>
+                    <button class="action-btn" id="downloadLogsBtn">📥 Download CSV</button>
+                    <button class="action-btn" id="refreshLogsBtn">🔄 Refresh</button>
+                </div>
+                <div id="logsList" class="logs-list">Loading logs...</div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="js/api.js"></script>
+    <script>
+        let allLogs = [];
+        
+        function showToast(message, isError = false) {
+            const toast = document.createElement('div');
+            toast.className = 'toast-message';
+            toast.style.background = isError ? '#ff4444' : '#00ff9d';
+            toast.style.color = isError ? 'white' : '#0a0e27';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+        
+        // Direct download using window.location - NO BLOB URL CREATED
+        function downloadLogsCSV() {
+            const severity = document.getElementById('severityFilter').value;
+            let url = `http://localhost:8000/api/export/logs/csv?limit=5000`;
+            if (severity) {
+                url += `&severity=${severity}`;
+            }
+            
+            // Use window.location.href - browser handles download natively
+            // This creates NO blob URL and NO warning
+            window.location.href = url;
+            showToast('📥 Downloading logs...');
+        }
+        
+        async function loadLogs() {
+            try {
+                const severity = document.getElementById('severityFilter').value;
+                const result = await getLogs(200, severity || null);
+                
+                const container = document.getElementById('logsList');
+                
+                if (!result.success || !result.data.logs || result.data.logs.length === 0) {
+                    container.innerHTML = '<div class="loading">No logs found</div>';
+                    return;
+                }
+                
+                allLogs = result.data.logs;
+                const searchTerm = document.getElementById('searchLogs').value.toLowerCase();
+                
+                let filteredLogs = allLogs;
+                if (searchTerm) {
+                    filteredLogs = allLogs.filter(log => 
+                        JSON.stringify(log).toLowerCase().includes(searchTerm)
+                    );
+                }
+                
+                if (filteredLogs.length === 0) {
+                    container.innerHTML = '<div class="loading">No matching logs found</div>';
+                    return;
+                }
+                
+                container.innerHTML = filteredLogs.map(log => {
+                    let severityClass = 'badge-info';
+                    if (log.severity === 'critical') severityClass = 'badge-critical';
+                    else if (log.severity === 'error') severityClass = 'badge-error';
+                    else if (log.severity === 'warning') severityClass = 'badge-warning';
+                    
+                    const date = new Date(log.timestamp);
+                    const timeStr = date.toLocaleString();
+                    
+                    return `
+                        <div class="log-entry-item" style="border-left-color: ${log.severity === 'critical' ? '#ff4444' : log.severity === 'warning' ? '#ffaa44' : '#00ff9d'}">
+                            <div class="log-meta">
+                                <span>📅 ${timeStr}</span>
+                                <span>🌐 ${log.source_ip}</span>
+                                <span>📋 ${log.event_type}</span>
+                                <span class="${severityClass}">${log.severity.toUpperCase()}</span>
+                                ${log.threat_score > 0 ? `<span>🎯 Score: ${Math.round(log.threat_score)}</span>` : ''}
+                            </div>
+                            <div class="log-details">${JSON.stringify(log.details).substring(0, 300)}${JSON.stringify(log.details).length > 300 ? '...' : ''}</div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('Failed to load logs:', error);
+                document.getElementById('logsList').innerHTML = '<div class="loading">⚠️ Error loading logs. Make sure backend is running on port 8000</div>';
+            }
+        }
+        
+        // Search functionality
+        document.getElementById('searchLogs').addEventListener('input', () => {
+            const searchTerm = document.getElementById('searchLogs').value.toLowerCase();
+            if (!allLogs.length) return;
+            
+            const filteredLogs = allLogs.filter(log => 
+                JSON.stringify(log).toLowerCase().includes(searchTerm)
+            );
+            
+            const container = document.getElementById('logsList');
+            if (filteredLogs.length === 0) {
+                container.innerHTML = '<div class="loading">No matching logs found</div>';
+                return;
+            }
+            
+            container.innerHTML = filteredLogs.map(log => {
+                let severityClass = 'badge-info';
+                if (log.severity === 'critical') severityClass = 'badge-critical';
+                else if (log.severity === 'error') severityClass = 'badge-error';
+                else if (log.severity === 'warning') severityClass = 'badge-warning';
+                
+                const date = new Date(log.timestamp);
+                const timeStr = date.toLocaleString();
+                
+                return `
+                    <div class="log-entry-item" style="border-left-color: ${log.severity === 'critical' ? '#ff4444' : log.severity === 'warning' ? '#ffaa44' : '#00ff9d'}">
+                        <div class="log-meta">
+                            <span>📅 ${timeStr}</span>
+                            <span>🌐 ${log.source_ip}</span>
+                            <span>📋 ${log.event_type}</span>
+                            <span class="${severityClass}">${log.severity.toUpperCase()}</span>
+                            ${log.threat_score > 0 ? `<span>🎯 Score: ${Math.round(log.threat_score)}</span>` : ''}
+                        </div>
+                        <div class="log-details">${JSON.stringify(log.details).substring(0, 300)}${JSON.stringify(log.details).length > 300 ? '...' : ''}</div>
+                    </div>
+                `;
+            }).join('');
+        });
+        
+        // Severity filter
+        document.getElementById('severityFilter').addEventListener('change', () => {
+            loadLogs();
+        });
+        
+        // Download button - NO BLOB WARNING
+        document.getElementById('downloadLogsBtn').addEventListener('click', downloadLogsCSV);
+        
+        // Refresh button
+        document.getElementById('refreshLogsBtn').addEventListener('click', () => {
+            loadLogs();
+        });
+        
+        // Mobile menu
+        document.getElementById('mobileMenuBtn')?.addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('mobile-open');
+        });
+        
+        // Check API status
+        async function checkAPIStatus() {
+            const apiStatus = document.getElementById('apiStatus');
+            const statusDot = document.getElementById('statusDot');
+            const systemStatus = document.getElementById('systemStatus');
+            try {
+                const response = await fetch(`http://localhost:8000/health`);
+                if (response.ok) {
+                    apiStatus.textContent = 'API: Connected';
+                    apiStatus.className = 'api-status connected';
+                    statusDot.className = 'status-dot online';
+                    systemStatus.textContent = 'System Online';
+                } else {
+                    apiStatus.textContent = 'API: Disconnected';
+                    apiStatus.className = 'api-status disconnected';
+                    statusDot.className = 'status-dot offline';
+                    systemStatus.textContent = 'System Offline';
+                }
+            } catch {
+                apiStatus.textContent = 'API: Disconnected';
+                apiStatus.className = 'api-status disconnected';
+                statusDot.className = 'status-dot offline';
+                systemStatus.textContent = 'System Offline';
+            }
+        }
+        
+        // Initial load
+        loadLogs();
+        checkAPIStatus();
+        setInterval(checkAPIStatus, 5000);
+        setInterval(loadLogs, 15000);
+    </script>
+</body>
+</html>

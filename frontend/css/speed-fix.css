@@ -1,0 +1,40 @@
+/* Speed Control Enhancement */
+.speed-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 6px 16px;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 255, 157, 0.2);
+}
+
+.speed-control label {
+    color: #00ff9d;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.speed-control select {
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 1px solid rgba(0, 255, 157, 0.4);
+    border-radius: 8px;
+    color: #00ff9d;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.speed-control select:hover {
+    background: rgba(0, 255, 157, 0.1);
+    border-color: #00ff9d;
+}
+
+.speed-control select option {
+    background: #0a0e27;
+    color: #e0e0e0;
+    padding: 8px;
+}

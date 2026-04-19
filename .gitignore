@@ -1,0 +1,56 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+logs/
+error_logs/
+
+# AI Models
+*.pkl
+*.joblib
+*.h5
+*.pb
+
+# Frontend node modules (if any later)
+node_modules/
+npm-debug.log*
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Backend specific
+backend/app/ai/isolation_forest.pkl
